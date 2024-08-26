@@ -81,13 +81,14 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
     f.write('R2,RMSE,MAE,train_exec_time,test_exec_time\n')
     f.close()
 
-    current_window = SlidingWindow('partial.csv', window_size)
+    print('Loading dataset...')
+    current_window = SlidingWindow('partial.csv', window_size, generator=gen)
 
+    print('Starting training...')
     print(f'Seed: {SEED}')
     print(f'Model: {model_name}')
     print(f'Window size: {window_size} months')
     print(f'Forget: {forget}')
-    print('Starting training...')
 
     start = True
     pbar = tqdm(current_window, total=len(current_window), position=0, leave=False)

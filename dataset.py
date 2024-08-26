@@ -17,9 +17,10 @@ class PollutionDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 class SlidingWindow:
-    def __init__(self, dataset_path: str, window_size: int):
+    def __init__(self, dataset_path: str, window_size: int, generator=None):
         self.dataset = pd.read_csv(dataset_path)
         self.window_size = window_size
+        self.generator = generator
         self.months = [x for _, x in self.dataset.groupby('date')]
 
         assert len(self.months) - self.window_size >= 0, 'Window size too large'
@@ -49,7 +50,7 @@ class SlidingWindow:
                 i += 1
 
             data = PollutionDataset(X[:i], y[:i])
-            train_data, test_data = random_split(data, [0.8, 0.2])
+            train_data, test_data = random_split(data, [0.8, 0.2], generator=self.generator)
             yield train_data, test_data
 
     def __len__(self):
