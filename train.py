@@ -69,10 +69,11 @@ def evaluate(test_data: Subset[PollutionDataset], model: ModelLSTM | ModelGRU) -
 def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
     assert model_name in models_dict.keys(), f'Invalid model: {model_name}'
 
-    model_path = f'model_{model_name}_{window_size}m1m'
+    model_path = f'output/model_{model_name}_window_size={window_size}_forget={forget}'
+    file_path = f'output/results_{model_name}_window_size={window_size}_forget={forget}.csv'
     makedirs(model_path, exist_ok=True)
 
-    f = open(f'results_{window_size}m1m.csv', 'w')
+    f = open(file_path, 'w')
     f.write('month,year,')
     for x in TARGET_COLUMNS:
         f.write(f'{x}_R2,{x}_RMSE,{x}_MAE,')
@@ -103,7 +104,7 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
         metrics = evaluate(test_data, model)
 
         # Save results
-        f = open(f'results_{window_size}m1m.csv', 'a')
+        f = open(file_path, 'a')
         f.write(f'{month},{year},')
         for i, x in enumerate(TARGET_COLUMNS):
             f.write(f'{metrics["R2"][i]},{metrics["RMSE"][i]},{metrics["MAE"][i]},')
@@ -119,4 +120,4 @@ if __name__ == '__main__':
     if len(argv) > 3:
         main(argv[1], int(argv[2]), bool(argv[3]))
     else:
-        main()
+        print('Usage: python train.py <model_name> <window_size> <forget>')

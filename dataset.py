@@ -24,44 +24,27 @@ class SlidingWindow:
 
         assert len(self.months) - self.window_size >= 0, 'Window size too large'
 
-    def _compute_features(self, data: pd.DataFrame, null_threshold: float = 0.7) -> list[str]:
-        not_null = data.isnull().sum()
-        features = []
-        for col, null_values in not_null.items():
-            if col == 'date':
-                continue
-
-            if null_values == 0:
-                features.append(col)
-            # Per ora non serve dato che lavoriamo sul dataset completo
-            # elif null_values <= len(data) * null_threshold:
-            #     # Keep the feature but null values need to be handled
-            #     features.append(col)
-            #     # TODO gestire valori null
-
-        return features
-
     def __iter__(self):
         for start_month in range(0, len(self.months) - self.window_size):
             data_train = pd.concat(self.months[start_month:start_month + self.window_size])
             data_test = self.months[start_month + self.window_size]
-            features_to_keep = self._compute_features(data_train)
-            self.n_features = len(features_to_keep)
+            features = [x for x in self.dataset.columns if x != 'date']
+            self.n_features = len(features)
 
             # Month to predict
             self.current_eval_year, self.current_eval_month = data_test.iloc[0,0].split('-')
-            self.current_eval_year = f'20{self.current_eval_year}'
+            self.current_eval_year = self.current_eval_year if self.current_eval_year.startswith('20') else f'20{self.current_eval_year}'
 
             data = pd.concat((data_train, data_test)).groupby(['land_mask', 'latitude', 'longitude'])
 
-            X = torch.empty((len(data), self.window_size, len(features_to_keep)))
+            X = torch.empty((len(data), self.window_size, self.n_features))
             y = torch.empty((len(data), len(TARGET_COLUMNS)))
 
             i = 0
             for _, x in data:
                 if len(x) != self.window_size + 1:
                     continue
-                X[i,:,:] = torch.from_numpy(x.loc[x.index[:-1],features_to_keep].astype(np.float32).values)
+                X[i,:,:] = torch.from_numpy(x.loc[x.index[:-1],features].astype(np.float32).values)
                 y[i,:] = torch.from_numpy(x.loc[x.index[-1],TARGET_COLUMNS].astype(np.float32).values)
                 i += 1
 
