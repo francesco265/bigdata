@@ -50,7 +50,7 @@ class SlidingWindow:
                 i += 1
 
             data = PollutionDataset(X[:i], y[:i])
-            train_data, test_data = random_split(data, [0.8, 0.2], generator=self.generator)
+            train_data, test_data = random_split(data, [int(i * 0.8), i - int(i * 0.8)], generator=self.generator)
             yield train_data, test_data
 
     def __len__(self):
