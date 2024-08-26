@@ -8,6 +8,7 @@ from tqdm import tqdm
 from time import time
 from dataset import SlidingWindow, PollutionDataset, TARGET_COLUMNS
 from models import ModelGRU, ModelLSTM
+from typing import Union
 
 SEED = 42
 gen = torch.Generator()
@@ -24,7 +25,7 @@ def r2_score(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
     SS_tot = torch.sum((y_true - y_true.mean(dim=0)) ** 2, dim=0)
     return 1 - SS_res / SS_tot
 
-def training_loop(train_data: Subset[PollutionDataset], model: ModelLSTM | ModelGRU,
+def training_loop(train_data: Subset[PollutionDataset], model: Union[ModelLSTM, ModelGRU],
                   optimizer: Adam, month, year, epochs: int = 10, batch_size: int = 256) -> tuple[float, float]:
     model.train()
     train_time = time()
@@ -46,7 +47,7 @@ def training_loop(train_data: Subset[PollutionDataset], model: ModelLSTM | Model
     train_time = time() - train_time
     return train_time, sum(losses) / len(losses)
 
-def evaluate(test_data: Subset[PollutionDataset], model: ModelLSTM | ModelGRU) -> dict:
+def evaluate(test_data: Subset[PollutionDataset], model: Union[ModelLSTM, ModelGRU]) -> dict:
     model.eval()
     pred = torch.empty((len(test_data),6))
     target = torch.empty((len(test_data),6))
