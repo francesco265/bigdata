@@ -119,6 +119,6 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
 
 if __name__ == '__main__':
     if len(argv) > 3:
-        main(argv[1], int(argv[2]), bool(argv[3]))
+        main(argv[1], int(argv[2]), argv[3].lower() == 'true')
     else:
         print('Usage: python train.py <model_name> <window_size> <forget>')
