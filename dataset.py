@@ -1,4 +1,3 @@
-from time import time
 import torch
 import pandas as pd
 import numpy as np
@@ -18,10 +17,9 @@ class PollutionDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 class SlidingWindow:
-    def __init__(self, dataset_path: str, window_size: int, generator=None):
+    def __init__(self, dataset_path: str, window_size: int):
         self.dataset = pd.read_csv(dataset_path)
         self.window_size = window_size
-        self.generator = generator
         self.months = []
         self.months_val = []
         self.target_indexes = [self.dataset.columns.get_loc(x) for x in TARGET_COLUMNS]
@@ -65,7 +63,7 @@ class SlidingWindow:
 
             data = PollutionDataset(X, y)
             split_len = int(len(data) * 0.8)
-            train_data, test_data = random_split(data, [split_len, len(data) - split_len], generator=self.generator)
+            train_data, test_data = random_split(data, [split_len, len(data) - split_len])
             yield train_data, test_data
 
     def __len__(self):

@@ -11,8 +11,7 @@ from models import ModelGRU, ModelLSTM
 from typing import Union
 
 SEED = 42
-gen = torch.Generator()
-gen.manual_seed(SEED)
+torch.manual_seed(SEED)
 
 models_dict = {
     'lstm': ModelLSTM,
@@ -33,7 +32,7 @@ def training_loop(train_data: Subset[PollutionDataset], model: Union[ModelLSTM, 
     losses = []
     pbar = tqdm(range(epochs), desc=f'Training for {month}/{year}', position=1, leave=False)
     for _ in pbar:
-        for X, y in DataLoader(train_data, batch_size, shuffle=True, generator=gen):
+        for X, y in DataLoader(train_data, batch_size, shuffle=True):
             optimizer.zero_grad()
             y_hat = model(X)
             #loss = mse_loss(y_hat, y)
@@ -82,7 +81,7 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
     f.close()
 
     print('Loading dataset...')
-    current_window = SlidingWindow('partial.csv', window_size, generator=gen)
+    current_window = SlidingWindow('partial.csv', window_size)
 
     print('Starting training...')
     print(f'Seed: {SEED}')
