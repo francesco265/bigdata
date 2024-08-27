@@ -35,8 +35,8 @@ def training_loop(train_data: Subset[PollutionDataset], model: Union[ModelLSTM, 
         for X, y in DataLoader(train_data, batch_size, shuffle=True):
             optimizer.zero_grad()
             y_hat = model(X)
-            #loss = mse_loss(y_hat, y)
-            loss = (y_hat - y).pow(2).mean(0).sum()
+            loss = mse_loss(y_hat, y)
+            #loss = (y_hat - y).pow(2).mean(0).sum()
             loss.backward()
             optimizer.step()
             losses.append(loss.item())

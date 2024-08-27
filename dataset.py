@@ -31,7 +31,7 @@ class SlidingWindow:
             x.drop(columns=['date'], inplace=True)
             self.months.append(x)
 
-        assert len(self.months) - self.window_size >= 0, 'Window size too large'
+        assert len(self.months) - self.window_size > 0, 'Window size too large'
 
     def __iter__(self):
         for start_month in range(0, len(self.months) - self.window_size):
