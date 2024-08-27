@@ -81,7 +81,7 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
     f.close()
 
     print('Loading dataset...')
-    current_window = SlidingWindow('partial.csv', window_size)
+    current_window = SlidingWindow('data/merged_standardized_2000_2017.csv', window_size)
 
     print('Starting training...')
     print(f'Seed: {SEED}')
@@ -96,8 +96,7 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
 
         # Initialize model and optimizer
         if start or forget:
-            #model = models_dict[model_name](current_window.n_features, 6, bidirectional=model_name == 'bilstm')
-            model = ModelLSTM(current_window.n_features, 6)
+            model = models_dict[model_name](current_window.n_features, 6, bidirectional=model_name == 'bilstm')
             optimizer = Adam(model.parameters(), lr=0.001)
             start = False
 
