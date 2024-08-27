@@ -97,7 +97,8 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
 
         # Initialize model and optimizer
         if start or forget:
-            model = models_dict[model_name](current_window.n_features, 6, bidirectional=model_name == 'bilstm')
+            #model = models_dict[model_name](current_window.n_features, 6, bidirectional=model_name == 'bilstm')
+            model = ModelLSTM(current_window.n_features, 6)
             optimizer = Adam(model.parameters(), lr=0.001)
             start = False
 
