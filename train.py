@@ -7,16 +7,15 @@ from os import makedirs
 from tqdm import tqdm
 from time import time
 from dataset import SlidingWindow, PollutionDataset, TARGET_COLUMNS
-from models import ModelGRU, ModelLSTM
-from typing import Union
+from models import PollutionModel
 
 SEED = 42
 torch.manual_seed(SEED)
 
 models_dict = {
-    'lstm': ModelLSTM,
-    'bilstm': ModelLSTM,
-    'gru': ModelGRU
+    'lstm': { 'rnn_type': 'lstm' },
+    'bilstm': { 'rnn_type': 'lstm', 'bidirectional': True },
+    'gru': { 'rnn_type': 'gru' }
 }
 
 def r2_score(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
@@ -24,7 +23,7 @@ def r2_score(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
     SS_tot = torch.sum((y_true - y_true.mean(dim=0)) ** 2, dim=0)
     return 1 - SS_res / SS_tot
 
-def training_loop(train_data: Subset[PollutionDataset], model: Union[ModelLSTM, ModelGRU],
+def training_loop(train_data: Subset[PollutionDataset], model: PollutionModel,
                   optimizer: Adam, month, year, epochs: int = 10, batch_size: int = 256) -> tuple[float, float]:
     model.train()
     train_time = time()
@@ -46,7 +45,7 @@ def training_loop(train_data: Subset[PollutionDataset], model: Union[ModelLSTM, 
     train_time = time() - train_time
     return train_time, sum(losses) / len(losses)
 
-def evaluate(test_data: Subset[PollutionDataset], model: Union[ModelLSTM, ModelGRU]) -> dict:
+def evaluate(test_data: Subset[PollutionDataset], model: PollutionModel) -> dict:
     model.eval()
     pred = torch.empty((len(test_data),6))
     target = torch.empty((len(test_data),6))
@@ -96,7 +95,7 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
 
         # Initialize model and optimizer
         if start or forget:
-            model = models_dict[model_name](current_window.n_features, 6, bidirectional=model_name == 'bilstm')
+            model = PollutionModel(current_window.n_features, 6, **models_dict[model_name])
             optimizer = Adam(model.parameters(), lr=0.001)
             start = False
 
