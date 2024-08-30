@@ -8,7 +8,7 @@ class PollutionModel(nn.Module):
         layer_type = nn.LSTM if rnn_type == 'lstm' else nn.GRU
 
         self.hidden_size = (input_size + output_size) // 2
-        self.lstm = layer_type(self.hidden_size, self.hidden_size, batch_first=True, **kwargs)
+        self.rnn_layer = layer_type(self.hidden_size, self.hidden_size, batch_first=True, **kwargs)
         self.relu = nn.ReLU()
         self.fc1 = nn.Linear(input_size, self.hidden_size)
         if 'bidirectional' in kwargs and kwargs['bidirectional']:
@@ -18,6 +18,6 @@ class PollutionModel(nn.Module):
 
     def forward(self, x):
         out = self.relu(self.fc1(x))
-        out, _ = self.lstm(out)
+        out, _ = self.rnn_layer(out)
         out = self.fc2(self.relu(out[:, -1, :]))
         return out
