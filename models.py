@@ -7,6 +7,7 @@ class PollutionModel(nn.Module):
         assert rnn_type in ['lstm', 'gru'], 'rnn_type must be either "lstm" or "gru"'
         layer_type = nn.LSTM if rnn_type == 'lstm' else nn.GRU
 
+        self.input_size = input_size
         self.hidden_size = (input_size + output_size) // 2
         self.rnn_layer = layer_type(self.hidden_size, self.hidden_size, batch_first=True, **kwargs)
         self.relu = nn.ReLU()
@@ -15,6 +16,10 @@ class PollutionModel(nn.Module):
             self.fc2 = nn.Linear(self.hidden_size * 2, output_size)
         else:
             self.fc2 = nn.Linear(self.hidden_size, output_size)
+
+    def change_input_size(self, input_size):
+        self.input_size = input_size
+        self.fc1 = nn.Linear(input_size, self.hidden_size)
 
     def forward(self, x):
         out = self.relu(self.fc1(x))

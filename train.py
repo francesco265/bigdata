@@ -6,7 +6,7 @@ from sys import argv
 from os import makedirs
 from tqdm import tqdm
 from time import time
-from dataset import SlidingWindow, PollutionDataset, TARGET_COLUMNS
+from dataset import SlidingWindow, SlidingWindowDynamic, PollutionDataset, TARGET_COLUMNS
 from models import PollutionModel
 
 SEED = 42
@@ -65,11 +65,15 @@ def evaluate(test_data: Subset[PollutionDataset], model: PollutionModel) -> dict
 
     return {'RMSE': rmse, 'MAE': mae, 'R2': r2, 'test_time': test_time}
 
-def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
+def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False, dynamic: bool = False):
     assert model_name in models_dict.keys(), f'Invalid model: {model_name}'
 
-    model_path = f'output/model_{model_name}_window_size={window_size}_forget={forget}'
-    file_path = f'output/results_{model_name}_window_size={window_size}_forget={forget}.csv'
+    codename = f'{model_name}_window_size={window_size}'
+    codename += '_dynamic' if dynamic else '_full'
+    codename += '_forget' if forget else ''
+
+    model_path = f'output/model_{codename}'
+    file_path = f'output/results_{codename}.csv'
     makedirs(model_path, exist_ok=True)
 
     f = open(file_path, 'w')
@@ -80,13 +84,17 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
     f.close()
 
     print('Loading dataset...')
-    current_window = SlidingWindow('data/merged_standardized_2000_2017.csv', window_size)
+    if dynamic:
+        current_window = SlidingWindowDynamic('data/partial', window_size)
+    else:
+        current_window = SlidingWindow('data/merged_standardized_2000_2017.csv', window_size)
 
     print('Starting training...')
     print(f'Seed: {SEED}')
     print(f'Model: {model_name}')
     print(f'Window size: {window_size} months')
     print(f'Forget: {forget}')
+    print(f'Dynamic: {dynamic}')
 
     start = True
     pbar = tqdm(current_window, total=len(current_window), position=0, leave=False)
@@ -98,6 +106,9 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
             model = PollutionModel(current_window.n_features, 6, **models_dict[model_name])
             optimizer = Adam(model.parameters(), lr=0.001)
             start = False
+        elif dynamic and model.input_size != current_window.n_features:
+            model.change_input_size(current_window.n_features)
+            optimizer.param_groups[0]['params'] = [x for x in model.parameters()]
 
         # Train and evaluate
         train_time, loss = training_loop(train_data, model, optimizer, month, year)
@@ -117,7 +128,9 @@ def main(model_name: str = 'lstm', window_size: int = 6, forget: bool = False):
         pbar.set_postfix({'curr_loss': loss})
 
 if __name__ == '__main__':
-    if len(argv) > 3:
-        main(argv[1], int(argv[2]), argv[3].lower() == 'true')
+    if len(argv) < 3:
+        print('Usage: python train.py <model_name> <window_size> <--forget> <--dynamic>')
     else:
-        print('Usage: python train.py <model_name> <window_size> <forget>')
+        forget = '--forget' in argv
+        dynamic = '--dynamic' in argv
+        main(argv[1], int(argv[2]), forget, dynamic)
